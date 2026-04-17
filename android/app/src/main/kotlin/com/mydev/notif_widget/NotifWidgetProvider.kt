@@ -25,9 +25,9 @@ class NotifWidgetProvider : AppWidgetProvider() {
     }
 
     private fun updateWidget(context: Context, mgr: AppWidgetManager, id: Int) {
-        val prefs = context.getSharedPreferences(MyNotificationListener.PREFS, Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("notif_prefs", Context.MODE_PRIVATE)
         val alpha = prefs.getInt("bg_alpha", 204)
-        val json = prefs.getString(MyNotificationListener.KEY, "[]")
+        val json = prefs.getString("notifs", "[]")
         val array = JSONArray(json)
         val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
         val views = RemoteViews(context.packageName, R.layout.notif_widget_layout)
@@ -36,12 +36,15 @@ class NotifWidgetProvider : AppWidgetProvider() {
         views.setInt(R.id.widget_root, "setBackgroundColor", bgColor)
         views.setTextViewText(R.id.widget_title, "🔔 إشعاراتي (${array.length()})")
 
-        val ids = listOf(R.id.notif1, R.id.notif2, R.id.notif3, R.id.notif4, R.id.notif5)
-        ids.forEachIndexed { i, resId ->
+        val resIds = listOf(R.id.notif1, R.id.notif2, R.id.notif3, R.id.notif4, R.id.notif5)
+        resIds.forEachIndexed { i, resId ->
             if (i < array.length()) {
                 val n = array.getJSONObject(i)
                 val time = sdf.format(Date(n.getLong("time")))
-                views.setTextViewText(resId, "[$time] ${n.getString("app")}: ${n.getString("title")} - ${n.getString("text")}")
+                val app = n.getString("app")
+                val title = n.getString("title")
+                val text = n.getString("text")
+                views.setTextViewText(resId, "[$time] $app\n$title: $text")
             } else {
                 views.setTextViewText(resId, "")
             }

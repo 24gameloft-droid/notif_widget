@@ -15,10 +15,26 @@ class MyNotificationListener : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (sbn.isOngoing) return
+        
         val extras = sbn.notification.extras
         val title = extras.getString("android.title") ?: ""
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
         if (title.isEmpty() && text.isEmpty()) return
+
+        val prefs: SharedPreferences = getSharedPreferences(PREFS, MODE_PRIVATE)
+        val allowedApps = prefs.getStringSet("allowed_apps", emptySet()) ?: emptySet()
+        if (allowedApps.isNotEmpty() && !allowedApps.contains(sbn.packageName)) return
+
+        // منع التكرار - تحقق من آخر إشعار
+        val existing = prefs.getString(KEY, "[]")
+        val array = JSONArray(existing)
+        if (array.length() > 0) {
+            val last = array.getJSONObject(0)
+            if (last.getString("title") == title && 
+                last.getString("text") == text &&
+                last.getString("pkg") == sbn.packageName) return
+        }
 
         val appName = try {
             packageManager.getApplicationLabel(
@@ -26,18 +42,14 @@ class MyNotificationListener : NotificationListenerService() {
             ).toString()
         } catch (e: Exception) { sbn.packageName }
 
-        val prefs: SharedPreferences = getSharedPreferences(PREFS, MODE_PRIVATE)
-        val allowedApps = prefs.getStringSet("allowed_apps", emptySet()) ?: emptySet()
-        if (allowedApps.isNotEmpty() && !allowedApps.contains(sbn.packageName)) return
-
-        val existing = prefs.getString(KEY, "[]")
-        val array = JSONArray(existing)
         val newItem = JSONObject().apply {
             put("app", appName)
+            put("pkg", sbn.packageName)
             put("title", title)
             put("text", text)
             put("time", System.currentTimeMillis())
         }
+
         val newArray = JSONArray()
         newArray.put(newItem)
         for (i in 0 until minOf(array.length(), MAX - 1)) newArray.put(array.get(i))
