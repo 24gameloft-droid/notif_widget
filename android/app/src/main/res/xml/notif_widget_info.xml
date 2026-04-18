@@ -6,7 +6,8 @@
     android:minResizeHeight="80dp"
     android:maxResizeWidth="600dp"
     android:maxResizeHeight="800dp"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/notif_widget_layout"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"/>
+    android:widgetCategory="home_screen"
+    android:previewImage="@mipmap/ic_launcher"/>
