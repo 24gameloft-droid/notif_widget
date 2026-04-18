@@ -36,20 +36,18 @@ class MainActivity : FlutterActivity() {
                     val firstLaunch = prefs.getBoolean("first_launch", true)
                     val pm = packageManager
                     val appsArray = JSONArray()
-
-                    val packages = pm.getInstalledPackages(PackageManager.GET_META_DATA)
                     val appList = mutableListOf<Pair<String, String>>()
 
+                    val packages = pm.getInstalledPackages(PackageManager.GET_META_DATA)
                     for (pkg in packages) {
                         try {
-                            val name = pm.getApplicationLabel(pkg.applicationInfo).toString()
-                            val pkgName = pkg.packageName
-                            appList.add(Pair(name, pkgName))
+                            val appInfo = pkg.applicationInfo ?: continue
+                            val name = pm.getApplicationLabel(appInfo).toString()
+                            appList.add(Pair(name, pkg.packageName))
                         } catch (e: Exception) {}
                     }
 
                     appList.sortBy { it.first }
-
                     for ((name, pkg) in appList) {
                         val obj = JSONObject()
                         obj.put("name", name)
