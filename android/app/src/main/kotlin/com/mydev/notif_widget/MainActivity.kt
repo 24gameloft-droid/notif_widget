@@ -42,10 +42,6 @@ class MainActivity : FlutterActivity() {
                     val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
                     for (appInfo in packages) {
                         try {
-                            // show only user installed apps
-                            val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                            val isUpdatedSystem = (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                            if (isSystem && !isUpdatedSystem) continue
                             val name = pm.getApplicationLabel(appInfo).toString()
                             appList.add(Pair(name, appInfo.packageName))
                         } catch (e: Exception) {}
