@@ -9,6 +9,7 @@ import android.content.SharedPreferences
 import android.provider.Settings
 import android.content.ComponentName
 import android.content.pm.PackageManager
+import android.content.pm.ApplicationInfo
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -38,12 +39,15 @@ class MainActivity : FlutterActivity() {
                     val appsArray = JSONArray()
                     val appList = mutableListOf<Pair<String, String>>()
 
-                    val packages = pm.getInstalledPackages(PackageManager.GET_META_DATA)
-                    for (pkg in packages) {
+                    val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+                    for (appInfo in packages) {
                         try {
-                            val appInfo = pkg.applicationInfo ?: continue
+                            // show only user installed apps
+                            val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                            val isUpdatedSystem = (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                            if (isSystem && !isUpdatedSystem) continue
                             val name = pm.getApplicationLabel(appInfo).toString()
-                            appList.add(Pair(name, pkg.packageName))
+                            appList.add(Pair(name, appInfo.packageName))
                         } catch (e: Exception) {}
                     }
 

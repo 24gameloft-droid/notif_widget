@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.content.ComponentName
+import android.view.View
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,19 +35,27 @@ class NotifWidgetProvider : AppWidgetProvider() {
 
         val bgColor = (alpha shl 24) or 0x1E1E2E
         views.setInt(R.id.widget_root, "setBackgroundColor", bgColor)
-        views.setTextViewText(R.id.widget_title, "🔔 إشعاراتي (${array.length()})")
+        views.setTextViewText(R.id.widget_title, "Notifications (${array.length()})")
 
-        val resIds = listOf(R.id.notif1, R.id.notif2, R.id.notif3, R.id.notif4, R.id.notif5)
-        resIds.forEachIndexed { i, resId ->
+        val notifIds = listOf(R.id.notif1, R.id.notif2, R.id.notif3, R.id.notif4, R.id.notif5)
+        val divIds = listOf(R.id.div1, R.id.div2, R.id.div3, R.id.div4)
+
+        notifIds.forEachIndexed { i, resId ->
             if (i < array.length()) {
                 val n = array.getJSONObject(i)
                 val time = sdf.format(Date(n.getLong("time")))
                 val app = n.getString("app")
                 val title = n.getString("title")
                 val text = n.getString("text")
-                views.setTextViewText(resId, "[$time] $app\n$title: $text")
+                val display = "$app  $time\n$title\n$text"
+                views.setTextViewText(resId, display)
+                views.setViewVisibility(resId, View.VISIBLE)
+                if (i < divIds.size && i < array.length() - 1) {
+                    views.setViewVisibility(divIds[i], View.VISIBLE)
+                }
             } else {
-                views.setTextViewText(resId, "")
+                views.setViewVisibility(resId, View.GONE)
+                if (i < divIds.size) views.setViewVisibility(divIds[i], View.GONE)
             }
         }
         mgr.updateAppWidget(id, views)
