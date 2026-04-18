@@ -9,6 +9,7 @@ import android.content.SharedPreferences
 import android.provider.Settings
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.pm.ApplicationInfo
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -34,20 +35,21 @@ class MainActivity : FlutterActivity() {
                     val allowed = prefs.getStringSet("allowed_apps", emptySet()) ?: emptySet()
                     val alpha = prefs.getInt("bg_alpha", 204)
                     val firstLaunch = prefs.getBoolean("first_launch", true)
-
-                    // جلب التطبيقات المثبتة
                     val pm = packageManager
-                    val apps = pm.getInstalledApplications(0)
                     val appsArray = JSONArray()
-                    for (app in apps) {
-                        if (pm.getLaunchIntentForPackage(app.packageName) != null) {
-                            val obj = JSONObject()
-                            obj.put("name", pm.getApplicationLabel(app).toString())
-                            obj.put("package", app.packageName)
-                            appsArray.put(obj)
+                    val apps = pm.getInstalledApplications(0)
+                        .filter { app ->
+                            (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) ||
+                            pm.getLaunchIntentForPackage(app.packageName) != null
                         }
+                        .map { app -> Pair(pm.getApplicationLabel(app).toString(), app.packageName) }
+                        .sortedBy { it.first }
+                    for ((name, pkg) in apps) {
+                        val obj = JSONObject()
+                        obj.put("name", name)
+                        obj.put("package", pkg)
+                        appsArray.put(obj)
                     }
-
                     val data = JSONObject()
                     data.put("notifs", JSONArray(notifs))
                     data.put("apps", appsArray)
@@ -65,13 +67,9 @@ class MainActivity : FlutterActivity() {
                         .putInt("bg_alpha", alpha)
                         .putBoolean("first_launch", firstLaunch)
                         .apply()
-
-                    // تحديث الويدجت
-                    val mgr = AppWidgetManager.getInstance(this)
-                    val ids = mgr.getAppWidgetIds(ComponentName(this, NotifWidgetProvider::class.java))
-                    val intent = Intent(this, NotifWidgetProvider::class.java)
-                    intent.action = "UPDATE_WIDGET"
-                    sendBroadcast(intent)
+                    sendBroadcast(Intent(this, NotifWidgetProvider::class.java).apply {
+                        action = "UPDATE_WIDGET"
+                    })
                     result.success(true)
                 }
                 else -> result.notImplemented()
