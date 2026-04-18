@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.provider.Settings
 import android.content.ComponentName
+import android.content.pm.PackageManager
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -36,17 +37,20 @@ class MainActivity : FlutterActivity() {
                     val pm = packageManager
                     val appsArray = JSONArray()
 
-                    // get ALL apps that have a launcher icon
-                    val mainIntent = Intent(Intent.ACTION_MAIN, null)
-                    mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-                    val launcherApps = pm.queryIntentActivities(mainIntent, 0)
-                        .map { ri ->
-                            Pair(ri.loadLabel(pm).toString(), ri.activityInfo.packageName)
-                        }
-                        .distinctBy { it.second }
-                        .sortedBy { it.first }
+                    val packages = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+                    val appList = mutableListOf<Pair<String, String>>()
 
-                    for ((name, pkg) in launcherApps) {
+                    for (pkg in packages) {
+                        try {
+                            val name = pm.getApplicationLabel(pkg.applicationInfo).toString()
+                            val pkgName = pkg.packageName
+                            appList.add(Pair(name, pkgName))
+                        } catch (e: Exception) {}
+                    }
+
+                    appList.sortBy { it.first }
+
+                    for ((name, pkg) in appList) {
                         val obj = JSONObject()
                         obj.put("name", name)
                         obj.put("package", pkg)
