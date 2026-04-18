@@ -39,10 +39,12 @@ class MainActivity : FlutterActivity() {
                     val appsArray = JSONArray()
                     val appList = mutableListOf<Pair<String, String>>()
 
-                    // get all apps including user installed
-                    val packages = pm.getInstalledApplications(0)
-                    for (appInfo in packages) {
+                    val intent = Intent(Intent.ACTION_MAIN, null)
+                    intent.addCategory(Intent.CATEGORY_LAUNCHER)
+                    val resolvedApps = pm.queryIntentActivities(intent, 0)
+                    for (ri in resolvedApps) {
                         try {
+                            val appInfo = ri.activityInfo.applicationInfo
                             val name = pm.getApplicationLabel(appInfo).toString()
                             appList.add(Pair(name, appInfo.packageName))
                         } catch (e: Exception) {}
