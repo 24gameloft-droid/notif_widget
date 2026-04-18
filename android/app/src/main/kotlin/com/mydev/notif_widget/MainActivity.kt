@@ -9,7 +9,6 @@ import android.content.SharedPreferences
 import android.provider.Settings
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import android.content.pm.ApplicationInfo
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -39,12 +38,9 @@ class MainActivity : FlutterActivity() {
                     val appsArray = JSONArray()
                     val appList = mutableListOf<Pair<String, String>>()
 
-                    val intent = Intent(Intent.ACTION_MAIN, null)
-                    intent.addCategory(Intent.CATEGORY_LAUNCHER)
-                    val resolvedApps = pm.queryIntentActivities(intent, 0)
-                    for (ri in resolvedApps) {
+                    val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+                    for (appInfo in packages) {
                         try {
-                            val appInfo = ri.activityInfo.applicationInfo
                             val name = pm.getApplicationLabel(appInfo).toString()
                             appList.add(Pair(name, appInfo.packageName))
                         } catch (e: Exception) {}
