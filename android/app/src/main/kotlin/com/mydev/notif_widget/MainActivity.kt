@@ -9,6 +9,7 @@ import android.content.SharedPreferences
 import android.provider.Settings
 import android.content.ComponentName
 import android.content.pm.PackageManager
+import android.content.pm.ApplicationInfo
 import org.json.JSONArray
 import org.json.JSONObject
 
