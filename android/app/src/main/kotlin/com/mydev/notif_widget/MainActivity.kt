@@ -7,8 +7,8 @@ import android.os.Bundle
 import android.content.Intent
 import android.content.SharedPreferences
 import android.provider.Settings
+import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.content.pm.ApplicationInfo
 import org.json.JSONArray
 import org.json.JSONObject
@@ -37,28 +37,19 @@ class MainActivity : FlutterActivity() {
                     val firstLaunch = prefs.getBoolean("first_launch", true)
                     val pm = packageManager
                     val appsArray = JSONArray()
-                    val appList = mutableListOf<Pair<String, String>>()
-
-                    val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                    for (appInfo in packages) {
-                        try {
-                            val info = appInfo ?: continue
-                            val isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                            val isUpdated = (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                            if (isSystem && !isUpdated) continue
-                            val name = pm.getApplicationLabel(info).toString()
-                            appList.add(Pair(name, info.packageName))
-                        } catch (e: Exception) {}
-                    }
-
-                    appList.sortBy { it.first }
-                    for ((name, pkg) in appList) {
+                    val apps = pm.getInstalledApplications(0)
+                        .filter { app ->
+                            (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) ||
+                            pm.getLaunchIntentForPackage(app.packageName) != null
+                        }
+                        .map { app -> Pair(pm.getApplicationLabel(app).toString(), app.packageName) }
+                        .sortedBy { it.first }
+                    for ((name, pkg) in apps) {
                         val obj = JSONObject()
                         obj.put("name", name)
                         obj.put("package", pkg)
                         appsArray.put(obj)
                     }
-
                     val data = JSONObject()
                     data.put("notifs", JSONArray(notifs))
                     data.put("apps", appsArray)
